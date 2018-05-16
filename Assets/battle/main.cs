@@ -6,16 +6,20 @@ using UnityEngine.UI;
 public class main : MonoBehaviour {
 	public Text min;
 	public Text max;
-	public InputField inputfield;
-	public lightPos lightSprite;
-	public screen mainScreen;
-	public int turn = 1;
+	
+	public InputBarControl inputBar;
+	public lightImgControl lightImg;
+	public screenControl screen;
+	public startButtonControl startButton;
 	
 	static int point;
+	static int turn;
+	static int startCounting;
 	
 	// Use this for initialization
-	void Start () {
-		point = Random.Range(1, 1000);
+	void Awake () {
+		min.text = "";
+		max.text = "";
 	}
 	
 	// Update is called once per frame
@@ -23,13 +27,25 @@ public class main : MonoBehaviour {
 		
 	}
 	
+	public void startGame () {
+		point = Random.Range(1, 1000);
+		turn = 1;
+		startCounting = 4;
+		InvokeRepeating("StartCountDown", 0, 1);
+	}
+	
 	public void InputResult (int guess) {
 		if (guess == point) {
 			turn = turn == 1 ? 2 : 1;
 			
-			mainScreen.setImg(0);
-			inputfield.placeholder.GetComponent<Text>().text = "PLAYER " + System.Convert.ToString(turn) + " WINS!";
-			inputfield.enabled = false;
+			screen.setImg(0);
+			min.text = System.Convert.ToString(point);
+			max.text = System.Convert.ToString(point);
+			
+			inputBar.SetPrompt("PLAYER " + System.Convert.ToString(turn) + " WINS!");
+			inputBar.Switch(false);
+			
+			InvokeRepeating("EndSet", 5, 1);
 		}
 		else {
 			if (guess < point) {
@@ -51,18 +67,50 @@ public class main : MonoBehaviour {
 				}
 			}
 			
-			inputfield.placeholder.GetComponent<Text>().text = "Player " + System.Convert.ToString(turn);
-			inputfield.ActivateInputField();
+			inputBar.SetPrompt("Player " + System.Convert.ToString(turn));
+			inputBar.Select();
 		}
 		
 		
 		
 		if (turn == 1) {
-			lightSprite.setPos(-144, 40, 0);
+			lightImg.SetPos(-144, 40, 0);
 		}
 		else {
-			lightSprite.setPos(142, 40, 0);
+			lightImg.SetPos(142, 40, 0);
 		}
-		inputfield.text = "";
+	}
+	
+	void StartCountDown () {
+		startCounting--;
+		
+		if (startCounting > 0) {
+			screen.setText(System.Convert.ToString(startCounting));
+		}
+		else {
+			screen.setText("GO!");
+			
+			min.text = "0";
+			max.text = "1000";
+			
+			inputBar.SetPrompt("Player " + System.Convert.ToString(turn));
+			inputBar.Switch(true);
+			inputBar.Select();
+			
+			lightImg.Switch(true);
+			
+			CancelInvoke("StartCountDown");
+		}
+	}
+	
+	void EndSet () {
+		min.text = "";
+		max.text = "";
+		screen.hide();
+		lightImg.Switch(false);
+		inputBar.SetPrompt("");
+		
+		startButton.reset();
+		CancelInvoke("EndSet");
 	}
 }
