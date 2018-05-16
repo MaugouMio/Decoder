@@ -12,7 +12,7 @@ public class InputBarControl : MonoBehaviour {
 		inputfield.placeholder.GetComponent<Text>().text = "";
 	}
 	
-	public void SetPrompt (string placeholderText) {
+	public void setPrompt (string placeholderText) {
 		inputfield.placeholder.GetComponent<Text>().text = placeholderText;
 		inputfield.text = "";
 	}
@@ -22,7 +22,7 @@ public class InputBarControl : MonoBehaviour {
 	}
 	
 	public void Deselect () {
-		inputfield.ActivateInputField();
+		inputfield.DeactivateInputField();
 	}
 	
 	public void Switch (bool status) {
@@ -35,7 +35,7 @@ public class InputBarControl : MonoBehaviour {
 			mainScript.InputResult(guess);
 		}
 		else {
-			Debug.Log("invalid input");
+			mainScript.InputResult(0); //definitly failed guess number
 		}
 	}
 }

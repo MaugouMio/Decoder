@@ -19,9 +19,10 @@ public class screenControl : MonoBehaviour {
 		screen_text.text = "";
 	}
 	
-	public void setImg (int index) {
+	public void setImg (int index, bool flipX = false) {
 		screen_text.text = "";
 		this.GetComponent<Renderer>().enabled = true;
+		this.GetComponent<SpriteRenderer>().flipX = flipX;
 		this.GetComponent<SpriteRenderer>().sprite = all_img[index];
 	}
 	

@@ -15,6 +15,7 @@ public class main : MonoBehaviour {
 	static int point;
 	static int turn;
 	static int startCounting;
+	static int lastRandomImg;
 	
 	// Use this for initialization
 	void Awake () {
@@ -31,6 +32,8 @@ public class main : MonoBehaviour {
 		point = Random.Range(1, 1000);
 		turn = 1;
 		startCounting = 4;
+		lastRandomImg = 0;
+		
 		InvokeRepeating("StartCountDown", 0, 1);
 	}
 	
@@ -38,46 +41,57 @@ public class main : MonoBehaviour {
 		if (guess == point) {
 			turn = turn == 1 ? 2 : 1;
 			
-			screen.setImg(0);
+			screen.setImg(0); //boom image
 			min.text = System.Convert.ToString(point);
 			max.text = System.Convert.ToString(point);
 			
-			inputBar.SetPrompt("PLAYER " + System.Convert.ToString(turn) + " WINS!");
+			inputBar.setPrompt("PLAYER " + System.Convert.ToString(turn) + " WINS!");
 			inputBar.Switch(false);
 			
 			InvokeRepeating("EndSet", 5, 1);
 		}
 		else {
+			int randomImg = Random.Range(1, 4); //1 ~ 3 are troll images
 			if (guess < point) {
 				if (guess > System.Int32.Parse(min.text)) {
 					turn = turn == 1 ? 2 : 1;
 					min.text = System.Convert.ToString(guess);
+					
+					while (randomImg == lastRandomImg)
+						randomImg = Random.Range(1, 4);
+					screen.setImg(randomImg, turn == 1);
+					lastRandomImg = randomImg;
 				}
 				else {
-					Debug.Log("invalid number");
+					screen.setImg(4); //error image
 				}
 			}
 			else {
 				if (guess < System.Int32.Parse(max.text)) {
 					turn = turn == 1 ? 2 : 1;
 					max.text = System.Convert.ToString(guess);
+					
+					while (randomImg == lastRandomImg)
+						randomImg = Random.Range(1, 4);
+					screen.setImg(randomImg, turn == 1);
+					lastRandomImg = randomImg;
 				}
 				else {
-					Debug.Log("invalid number");
+					screen.setImg(4); //error image
 				}
 			}
 			
-			inputBar.SetPrompt("Player " + System.Convert.ToString(turn));
+			inputBar.setPrompt("Player " + System.Convert.ToString(turn));
 			inputBar.Select();
 		}
 		
 		
 		
 		if (turn == 1) {
-			lightImg.SetPos(-144, 40, 0);
+			lightImg.setPos(-144, 40, 0);
 		}
 		else {
-			lightImg.SetPos(142, 40, 0);
+			lightImg.setPos(142, 40, 0);
 		}
 	}
 	
@@ -93,7 +107,7 @@ public class main : MonoBehaviour {
 			min.text = "0";
 			max.text = "1000";
 			
-			inputBar.SetPrompt("Player " + System.Convert.ToString(turn));
+			inputBar.setPrompt("Player " + System.Convert.ToString(turn));
 			inputBar.Switch(true);
 			inputBar.Select();
 			
@@ -108,7 +122,7 @@ public class main : MonoBehaviour {
 		max.text = "";
 		screen.hide();
 		lightImg.Switch(false);
-		inputBar.SetPrompt("");
+		inputBar.setPrompt("");
 		
 		startButton.reset();
 		CancelInvoke("EndSet");

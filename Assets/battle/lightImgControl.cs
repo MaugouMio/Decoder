@@ -8,7 +8,7 @@ public class lightImgControl : MonoBehaviour {
 		this.GetComponent<Renderer>().enabled = false;
 	}
 	
-	public void SetPos (float x, float y, float z) {
+	public void setPos (float x, float y, float z) {
 		this.transform.localPosition = new Vector3(x, y, z);
 	}
 	
