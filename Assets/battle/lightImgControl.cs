@@ -15,4 +15,13 @@ public class lightImgControl : MonoBehaviour {
 	public void Switch (bool status) {
 		this.GetComponent<Renderer>().enabled = status;
 	}
+	
+	public void setTurn (int turn) {
+		if (turn == 1) { //set the spot light position
+			setPos(-144, 40, 0);
+		}
+		else {
+			setPos(142, 40, 0);
+		}
+	}
 }

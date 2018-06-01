@@ -30,12 +30,14 @@ public class InputBarControl : MonoBehaviour {
 	}
 	
 	public void GetInputNumber () {
-		int guess;
-		if (System.Int32.TryParse(inputfield.text, out guess)) {
-			mainScript.InputResult(guess);
-		}
-		else {
-			mainScript.InputResult(0); //definitly failed guess number
+		if (inputfield.enabled){
+			int guess;
+			if (System.Int32.TryParse(inputfield.text, out guess)) {
+				mainScript.InputResult(guess);
+			}
+			else {
+				mainScript.InputResult(0); //definitly failed guess number
+			}
 		}
 	}
 }
