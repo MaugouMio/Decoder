@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Audio;
 
 public class main : MonoBehaviour {
 	public Text min; //the text display the lower bound
@@ -27,6 +28,8 @@ public class main : MonoBehaviour {
 	static int lastRandomImg; //the image index showed last time, for not repeating
 	static int startCounting; //the count down number after pressing the start button
 	static int turnCounting; //the count down number for each turn
+
+	// public AudioSource audio;
 	
 	// Use this for initialization
 	void Awake () {
@@ -36,6 +39,14 @@ public class main : MonoBehaviour {
 		HP2.text = "";
 		
 		HPchange = false;
+
+		// audio = (AudioSource)gameObject.AddComponent <AudioSource>();
+		// AudioClip myClip;
+		// myClip = (AudioClip)Resources.Load("bang.mp3");
+		// audio.clip = myClip;
+		
+		// audio.Play();
+
 	}
 	
 	// Update is called once per frame
@@ -53,6 +64,7 @@ public class main : MonoBehaviour {
 				HPchange = false;
 			}
 		}
+		
 	}
 	
 	public void startGame () {
@@ -134,6 +146,8 @@ public class main : MonoBehaviour {
 	
 	void RoundEnd () {
 		CancelInvoke("TurnCountDown");
+
+		
 		
 		HP[turn - 1] -= MAX_DAMAGE / (guess_time + 1) + 10;
 		
