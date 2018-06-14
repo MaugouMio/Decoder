@@ -22,31 +22,25 @@ public class main : MonoBehaviour {
 	static int startTurn; //determine which player to act at the begining
 	static int [] HP = new int [2]; //the health of the players
 	static int [] displayHP = new int [2]; //the display health of the players
+    
+	static bool[,] skill_status = new bool[2,3]; 
+
 	static int guess_time;
 	static bool HPchange;
 	
 	static int lastRandomImg; //the image index showed last time, for not repeating
 	static int startCounting; //the count down number after pressing the start button
 	static int turnCounting; //the count down number for each turn
-
-	// public AudioSource audio;
 	
+	public AudioSource bang;
 	// Use this for initialization
 	void Awake () {
 		min.text = "";
 		max.text = "";
 		HP1.text = "";
 		HP2.text = "";
-		
+		bang = this.GetComponent<AudioSource>();
 		HPchange = false;
-
-		// audio = (AudioSource)gameObject.AddComponent <AudioSource>();
-		// AudioClip myClip;
-		// myClip = (AudioClip)Resources.Load("bang.mp3");
-		// audio.clip = myClip;
-		
-		// audio.Play();
-
 	}
 	
 	// Update is called once per frame
@@ -64,7 +58,6 @@ public class main : MonoBehaviour {
 				HPchange = false;
 			}
 		}
-		
 	}
 	
 	public void startGame () {
@@ -79,6 +72,16 @@ public class main : MonoBehaviour {
 	}
 	
 	public void InputResult (int guess) {
+        //for challengePart
+		if(skill_status[0,2] || skill_status[1,2])
+		{
+			if(guess != System.Int32.Parse(min.text))
+			{
+				RoundEnd();
+			}
+
+		}
+
 		if (guess == point) {
 			RoundEnd(); //things to do at the end of a round
 		}
@@ -105,7 +108,50 @@ public class main : MonoBehaviour {
 		
 		lightImg.setTurn(turn);
 	}
-	
+	public bool use_skill(string skill){
+		
+		if(skill == "hack" && !skill_status[turn,0]){
+			int display_bit = Random.Range(0 ,2);
+			int display_num = Mathf.FloorToInt(point / Mathf.Pow(10, display_bit) % 10);
+            char[] tmp = "XXX".ToCharArray();
+            tmp[display_bit] = display_num.ToString()[0];
+            string display_result = new string(tmp);
+
+			screen.setText(display_result);
+			CancelInvoke("TurnCountDown");
+			turnCounting = 6;
+            InvokeRepeating("TurnCountDown", 2, 1);
+			inputBar.Switch(false);
+
+			skill_status[turn, 0] = true;
+
+			return true;
+		}else if(skill == "swap" && !skill_status[turn-1,1]){
+			
+			CancelInvoke("TurnCountDown");
+            turnCounting = 6;
+            InvokeRepeating("TurnCountDown", 2, 1); //restart the turn counting down after 2 seconds
+            inputBar.Switch(false);
+            skill_status[turn-1, 1] = true;
+			turn = turn == 1 ? 2 : 1; //swap turn
+			lightImg.setTurn(turn);
+			inputBar.setPrompt("SWAP to PLAYER " + System.Convert.ToString(turn));
+			return true;
+		}else if(skill == "challenge" && !skill_status[turn-1, 2]){
+			
+			inputBar.setPrompt("CHALLENGING...");
+
+			CancelInvoke("TurnCountDown");
+            turnCounting = 6;
+            InvokeRepeating("TurnCountDown", 2, 1); //restart the turn counting down after 2 seconds
+            inputBar.Switch(false);
+
+			skill_status[turn-1, 2] = true;
+			return true;
+		}
+		return false;
+	}
+
 	void valid_guess (int guess, bool Lower) {
 		CancelInvoke("TurnCountDown");
 		turnCounting = 6;
@@ -145,9 +191,8 @@ public class main : MonoBehaviour {
 	}
 	
 	void RoundEnd () {
+		bang.Play();
 		CancelInvoke("TurnCountDown");
-
-		
 		
 		HP[turn - 1] -= MAX_DAMAGE / (guess_time + 1) + 10;
 		

@@ -36,7 +36,10 @@ public class InputBarControl : MonoBehaviour {
 				mainScript.InputResult(guess);
 			}
 			else {
-				mainScript.InputResult(0); //definitly failed guess number
+				if (!mainScript.use_skill(inputfield.text))
+				{
+					mainScript.InputResult(0); //definitly failed guess number
+				}
 			}
 		}
 	}
