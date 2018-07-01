@@ -18,10 +18,10 @@ public class lightImgControl : MonoBehaviour {
 	
 	public void setTurn (int turn) {
 		if (turn == 1) { //set the spot light position
-			setPos(-144, 40, 0);
+			setPos(-445, 128, 0);
 		}
 		else {
-			setPos(142, 40, 0);
+			setPos(440, 128, 0);
 		}
 	}
 }

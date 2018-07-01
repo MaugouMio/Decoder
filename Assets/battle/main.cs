@@ -15,6 +15,8 @@ public class main : MonoBehaviour {
 	public screenControl screen; //the API of the middle screen sprite
 	public startButtonControl startButton; //the API of the start button
 	
+	public AudioSource bang;
+	
 	static readonly int MAX_DAMAGE = 200;
 	
 	static int point; //the target number
@@ -22,7 +24,7 @@ public class main : MonoBehaviour {
 	static int startTurn; //determine which player to act at the begining
 	static int [] HP = new int [2]; //the health of the players
 	static int [] displayHP = new int [2]; //the display health of the players
-    
+	
 	static bool[,] skill_status = new bool[2,3]; 
 
 	static int guess_time;
@@ -32,7 +34,6 @@ public class main : MonoBehaviour {
 	static int startCounting; //the count down number after pressing the start button
 	static int turnCounting; //the count down number for each turn
 	
-	public AudioSource bang;
 	// Use this for initialization
 	void Awake () {
 		min.text = "";
@@ -72,7 +73,7 @@ public class main : MonoBehaviour {
 	}
 	
 	public void InputResult (int guess) {
-        //for challengePart
+		//for challengePart
 		if(skill_status[0,2] || skill_status[1,2])
 		{
 			if(guess != System.Int32.Parse(min.text))
@@ -92,6 +93,7 @@ public class main : MonoBehaviour {
 				}
 				else {
 					screen.setImg(4); //error image
+					inputBar.Select();
 				}
 			}
 			else { //guess > point
@@ -100,6 +102,7 @@ public class main : MonoBehaviour {
 				}
 				else {
 					screen.setImg(4); //error image
+					inputBar.Select();
 				}
 			}
 			
@@ -108,45 +111,48 @@ public class main : MonoBehaviour {
 		
 		lightImg.setTurn(turn);
 	}
-	public bool use_skill(string skill){
+	
+	public bool use_skill(string skill) {
 		
 		if(skill == "hack" && !skill_status[turn,0]){
 			int display_bit = Random.Range(0 ,2);
 			int display_num = Mathf.FloorToInt(point / Mathf.Pow(10, display_bit) % 10);
-            char[] tmp = "XXX".ToCharArray();
-            tmp[display_bit] = display_num.ToString()[0];
-            string display_result = new string(tmp);
+			char[] tmp = "XXX".ToCharArray();
+			tmp[display_bit] = display_num.ToString()[0];
+			string display_result = new string(tmp);
 
 			screen.setText(display_result);
+			
 			CancelInvoke("TurnCountDown");
 			turnCounting = 6;
-            InvokeRepeating("TurnCountDown", 2, 1);
+			InvokeRepeating("TurnCountDown", 2, 1);
 			inputBar.Switch(false);
 
 			skill_status[turn, 0] = true;
 
 			return true;
-		}else if(skill == "swap" && !skill_status[turn-1,1]){
+		}
+		else if(skill == "swap" && !skill_status[turn - 1,1]) {
 			
 			CancelInvoke("TurnCountDown");
-            turnCounting = 6;
-            InvokeRepeating("TurnCountDown", 2, 1); //restart the turn counting down after 2 seconds
-            inputBar.Switch(false);
-            skill_status[turn-1, 1] = true;
+			turnCounting = 6;
+			InvokeRepeating("TurnCountDown", 2, 1); //restart the turn counting down after 2 seconds
+			inputBar.Switch(false);
+			skill_status[turn - 1, 1] = true;
 			turn = turn == 1 ? 2 : 1; //swap turn
 			lightImg.setTurn(turn);
 			inputBar.setPrompt("SWAP to PLAYER " + System.Convert.ToString(turn));
 			return true;
-		}else if(skill == "challenge" && !skill_status[turn-1, 2]){
-			
+		}
+		else if(skill == "challenge" && !skill_status[turn-1, 2]) {
 			inputBar.setPrompt("CHALLENGING...");
 
 			CancelInvoke("TurnCountDown");
-            turnCounting = 6;
-            InvokeRepeating("TurnCountDown", 2, 1); //restart the turn counting down after 2 seconds
-            inputBar.Switch(false);
+			turnCounting = 6;
+			InvokeRepeating("TurnCountDown", 2, 1); //restart the turn counting down after 2 seconds
+			inputBar.Switch(false);
 
-			skill_status[turn-1, 2] = true;
+			skill_status[turn - 1, 2] = true;
 			return true;
 		}
 		return false;
