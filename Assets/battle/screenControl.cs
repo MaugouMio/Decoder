@@ -4,8 +4,8 @@ using UnityEngine;
 using UnityEngine.UI;
 
 public class screenControl : MonoBehaviour {
-	public Text screen_text;
-	
+	public 
+	Text screen_text;
 	Sprite[] all_img;
 	
 	void Awake () {

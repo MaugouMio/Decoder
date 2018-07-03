@@ -23,7 +23,7 @@ public class main : MonoBehaviour {
 	static int turn; //determine which player to act
 	static int startTurn; //determine which player to act at the begining
 	static int [] HP = new int [2]; //the health of the players
-	static int [] displayHP = new int [2]; //the display health of the players
+	static int [] displayHP = new int [2]; //skill_statusthe display health of the players
 	
 	static bool[,] skill_status = new bool[2,3]; 
 

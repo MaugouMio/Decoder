@@ -1,0 +1,2 @@
+/Users/hanjitsai/Documents/c#/Decoder/obj/Debug/Assembly-CSharp.csprojResolveAssemblyReference.cache
+/Users/hanjitsai/Documents/c#/Decoder/obj/Debug/Assembly-CSharp.csproj.CoreCompileInputs.cache
