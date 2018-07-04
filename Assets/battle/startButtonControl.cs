@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 public class startButtonControl : MonoBehaviour {
+	
 	public main mainScript;
 	public GameObject thisButton;
 

@@ -14,6 +14,7 @@ public class main : MonoBehaviour {
 	public lightImgControl lightImg; //the API of the light sprite
 	public screenControl screen; //the API of the middle screen sprite
 	public startButtonControl startButton; //the API of the start button
+	public SkillButton skillButton;
 	
 	public AudioSource bang;
 	
@@ -114,7 +115,7 @@ public class main : MonoBehaviour {
 	
 	public bool use_skill(string skill) {
 		
-		if(skill == "hack" && !skill_status[turn,0]){
+		if(skill == "hack" && ! skill_status[turn - 1, 0]){
 			int display_bit = Random.Range(0 ,2);
 			int display_num = Mathf.FloorToInt(point / Mathf.Pow(10, display_bit) % 10);
 			char[] tmp = "XXX".ToCharArray();
@@ -128,7 +129,7 @@ public class main : MonoBehaviour {
 			InvokeRepeating("TurnCountDown", 2, 1);
 			inputBar.Switch(false);
 
-			skill_status[turn, 0] = true;
+			skill_status[turn - 1, 0] = true;
 
 			return true;
 		}
@@ -139,13 +140,14 @@ public class main : MonoBehaviour {
 			InvokeRepeating("TurnCountDown", 2, 1); //restart the turn counting down after 2 seconds
 			inputBar.Switch(false);
 			skill_status[turn - 1, 1] = true;
+
 			turn = turn == 1 ? 2 : 1; //swap turn
 			lightImg.setTurn(turn);
-			inputBar.setPrompt("SWAP to PLAYER " + System.Convert.ToString(turn));
+			//inputBar.setPrompt("SWAP to PLAYER " + System.Convert.ToString(turn));
 			return true;
 		}
-		else if(skill == "challenge" && !skill_status[turn-1, 2]) {
-			inputBar.setPrompt("CHALLENGING...");
+		else if(skill == "challenge" && !skill_status[turn - 1, 2]) {
+			//inputBar.setPrompt("CHALLENGING...");
 
 			CancelInvoke("TurnCountDown");
 			turnCounting = 6;
@@ -178,6 +180,18 @@ public class main : MonoBehaviour {
 			randomImg = Random.Range(1, 4);
 		screen.setImg(randomImg, turn == 1);
 		lastRandomImg = randomImg;
+
+		if (turn == 2)//Turn on the Button
+		{
+			skillButton.swapButton.interactable=true;
+			skillButton.challengeButton.interactable = true;
+			skillButton.hackButton.interactable = true;
+		}
+		else{
+			skillButton.swapButton.interactable = false;
+			skillButton.challengeButton.interactable = false;
+			skillButton.hackButton.interactable = false;
+		}
 	}
 	
 	void TurnCountDown () {
