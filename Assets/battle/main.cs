@@ -1,10 +1,11 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Networking;
 using UnityEngine.UI;
 using UnityEngine.Audio;
 
-public class main : MonoBehaviour {
+public class main : NetworkBehaviour {
 	public Text min; //the text display the lower bound
 	public Text max; //the text display the upper bound
 	public Text HP1; //the text of player 1 HP
@@ -18,22 +19,31 @@ public class main : MonoBehaviour {
 	
 	public AudioSource bang;
 	
-	static readonly int MAX_DAMAGE = 200;
+	const int MAX_DAMAGE = 200;
 	
-	static int point; //the target number
-	static int turn; //determine which player to act
-	static int startTurn; //determine which player to act at the begining
-	static int [] HP = new int [2]; //the health of the players
-	static int [] displayHP = new int [2]; //skill_statusthe display health of the players
-	
-	static bool[,] skill_status = new bool[2,3]; 
+	int point; //the target number
+	[SyncVar]
+	int turn; //determine which player to act
+	[SyncVar]
+	int startTurn; //determine which player to act at the begining
 
-	static int guess_time;
-	static bool HPchange;
+	[SyncVar]
+	Vector2 HP; //the health of the players
+	Vector2 displayHP; //the display health of the players
+	[SyncVar]
+	Vector2 memory_space; 
+
+	int guess_time;
+	bool HPchange;
 	
-	static int lastRandomImg; //the image index showed last time, for not repeating
-	static int startCounting; //the count down number after pressing the start button
-	static int turnCounting; //the count down number for each turn
+	[SyncVar]
+	int randomImg;
+	int lastRandomImg; //the image index showed last time, for not repeating
+	int startCounting; //the count down number after pressing the start button
+	int turnCounting; //the count down number for each turn
+
+	int your_turn;
+	bool challenge;
 	
 	// Use this for initialization
 	void Awake () {
@@ -43,6 +53,14 @@ public class main : MonoBehaviour {
 		HP2.text = "";
 		bang = this.GetComponent<AudioSource>();
 		HPchange = false;
+		
+		if (isServer) {
+			your_turn = 1;
+			startButton.hide();
+		}
+		else {
+			your_turn = 2;
+		}
 	}
 	
 	// Update is called once per frame
@@ -62,136 +80,134 @@ public class main : MonoBehaviour {
 		}
 	}
 	
-	public void startGame () {
-		HP[0] = 100;
-		HP[1] = 100;
+	[Command]
+	public void CmdStartGame () {
+		if (isServer) {
+			HP[0] = 100;
+			HP[1] = 100;
+			startTurn = 1;
+		}
+		
 		displayHP[0] = 100;
 		displayHP[1] = 100;
-		startTurn = 1;
 		
 		startCounting = 4;
 		InvokeRepeating("StartCountDown", 0, 1); //the starting count down, called 1 time per second
 	}
 	
-	public void InputResult (int guess) {
-		//for challengePart
-		if(skill_status[0,2] || skill_status[1,2])
-		{
-			if(guess != System.Int32.Parse(min.text))
-			{
-				RoundEnd();
-			}
-
-		}
-
-		if (guess == point) {
-			RoundEnd(); //things to do at the end of a round
-		}
-		else {
-			if (guess < point) {
-				if (guess > System.Int32.Parse(min.text)) { //valid guess
-					valid_guess(guess, true);
-				}
-				else {
-					screen.setImg(4); //error image
-					inputBar.Select();
-				}
-			}
-			else { //guess > point
-				if (guess < System.Int32.Parse(max.text)) {
-					valid_guess(guess, false);
-				}
-				else {
-					screen.setImg(4); //error image
-					inputBar.Select();
-				}
+	[Command]
+	public void CmdInputResult (int guess, bool timeout) {
+		if (isServer) {
+			if (timeout) {
+				guess = point;
+				challenge = false;
 			}
 			
-			inputBar.setPrompt("Player " + System.Convert.ToString(turn)); //the prompt word
+			if (guess == point) {
+				RoundEnd(challenge); //things to do at the end of a round
+			}
+			else {
+				if (guess < point) {
+					if (guess > System.Int32.Parse(min.text)) { //valid guess
+						valid_guess(guess, true);
+					}
+					else {
+						RpcWrongInput();
+					}
+				}
+				else { //guess > point
+					if (guess < System.Int32.Parse(max.text)) {
+						valid_guess(guess, false);
+					}
+					else {
+						RpcWrongInput();
+					}
+				}
+			}
 		}
-		
-		lightImg.setTurn(turn);
 	}
 	
-	public bool use_skill(string skill) {
+	[ClientRpc]
+	void RpcWrongInput () {
+		screen.setImg(4); //error image
+		if (turn == your_turn) {
+			inputBar.Select();
+		}
+	}
+	
+	[Command]
+	public void Cmd_use_skill(string skill) {
+		if(skill == "hack"){
+			if (isServer) {
+				memory_space[turn - 1] -= 512;
+				int display_bit = Random.Range(0 ,2);
+				int display_num = Mathf.FloorToInt(point / Mathf.Pow(10, display_bit) % 10);
+				char[] tmp = "XXX".ToCharArray();
+				tmp[display_bit] = display_num.ToString()[0];
+				string display_result = new string(tmp);
+				
+				RpcSkillDisplay(display_result, "???", 136);
+			}
+		}
+		else if(skill == "swap") {
+			if (isServer) {
+				memory_space[turn - 1] -= 256;
+				turn = turn == 1 ? 2 : 1; //swap turn
+				
+				RpcSkillDisplay("SWAP", "SWAP", 96);
+			}
+		}
+		else if(skill == "challenge") {
+			if (isServer) {
+				memory_space[turn - 1] -= 128;
+				challenge = true;
+				
+				RpcSkillDisplay("CHALLENGE", "CHALLENGE", 45);
+			}
+		}
+	}
+	
+	[ClientRpc]
+	void RpcSkillDisplay (string result, string unknown, int size) {
+		if (turn == your_turn) {
+			screen.setText(result, size);
+		}
+		else {
+			screen.setText(unknown, size);
+		}
 		
-		if(skill == "hack" && ! skill_status[turn - 1, 0]){
-			int display_bit = Random.Range(0 ,2);
-			int display_num = Mathf.FloorToInt(point / Mathf.Pow(10, display_bit) % 10);
-			char[] tmp = "XXX".ToCharArray();
-			tmp[display_bit] = display_num.ToString()[0];
-			string display_result = new string(tmp);
-
-			screen.setText(display_result);
-			
-			CancelInvoke("TurnCountDown");
-			turnCounting = 6;
-			InvokeRepeating("TurnCountDown", 2, 1);
-			inputBar.Switch(false);
-
-			skill_status[turn - 1, 0] = true;
-
-			return true;
-		}
-		else if(skill == "swap" && !skill_status[turn - 1,1]) {
-			
-			CancelInvoke("TurnCountDown");
-			turnCounting = 6;
-			InvokeRepeating("TurnCountDown", 2, 1); //restart the turn counting down after 2 seconds
-			inputBar.Switch(false);
-			skill_status[turn - 1, 1] = true;
-
-			turn = turn == 1 ? 2 : 1; //swap turn
-			lightImg.setTurn(turn);
-			//inputBar.setPrompt("SWAP to PLAYER " + System.Convert.ToString(turn));
-			return true;
-		}
-		else if(skill == "challenge" && !skill_status[turn - 1, 2]) {
-			//inputBar.setPrompt("CHALLENGING...");
-
-			CancelInvoke("TurnCountDown");
-			turnCounting = 6;
-			InvokeRepeating("TurnCountDown", 2, 1); //restart the turn counting down after 2 seconds
-			inputBar.Switch(false);
-
-			skill_status[turn - 1, 2] = true;
-			return true;
-		}
-		return false;
+		CancelInvoke("TurnCountDown");
+		turnCounting = 6;
+		InvokeRepeating("TurnCountDown", 2, 1);
+		inputBar.Switch(false);
+		lightImg.setTurn(turn);
 	}
 
 	void valid_guess (int guess, bool Lower) {
+		guess_time++;
+		turn = turn == 1 ? 2 : 1; //swap turn
+		while (randomImg == lastRandomImg)
+			randomImg = Random.Range(1, 4); //1 ~ 3 are troll images
+		lastRandomImg = randomImg;
+		
+		RpcValidGuess(guess, Lower);
+	}
+	
+	[ClientRpc]
+	void RpcValidGuess (int guess, bool Lower) {
 		CancelInvoke("TurnCountDown");
 		turnCounting = 6;
 		InvokeRepeating("TurnCountDown", 2, 1); //restart the turn counting down after 2 seconds
 		inputBar.Switch(false);
-		
-		int randomImg = Random.Range(1, 4); //1 ~ 3 are troll images
-		guess_time++;
-		
-		turn = turn == 1 ? 2 : 1; //swap turn
 		
 		if (Lower)
 			min.text = System.Convert.ToString(guess);
 		else
 			max.text = System.Convert.ToString(guess);
 		
-		while (randomImg == lastRandomImg)
-			randomImg = Random.Range(1, 4);
 		screen.setImg(randomImg, turn == 1);
-		lastRandomImg = randomImg;
-
-		if (turn == 2)//Turn on the Button
-		{
-			skillButton.swapButton.interactable=true;
-			skillButton.challengeButton.interactable = true;
-			skillButton.hackButton.interactable = true;
-		}
-		else{
-			skillButton.swapButton.interactable = false;
-			skillButton.challengeButton.interactable = false;
-			skillButton.hackButton.interactable = false;
-		}
+		lightImg.setTurn(turn);
+		inputBar.setPrompt("Player " + System.Convert.ToString(turn)); //the prompt word
 	}
 	
 	void TurnCountDown () {
@@ -200,41 +216,63 @@ public class main : MonoBehaviour {
 		if (turnCounting > 0) {
 			screen.setText(System.Convert.ToString(turnCounting)); //display the rest time
 			if (turnCounting == 5) {
-				inputBar.Switch(true);
-				inputBar.Select(); //automatically select the input field for user convenience
+				if (turn == your_turn) { //Turn on the Button
+					skillButton.on((int)memory_space[your_turn - 1]);
+					inputBar.Switch(true);
+					inputBar.Select(); //automatically select the input field for user convenience
+				}
 			}
 		}
 		else { //failed to action in time
 			CancelInvoke("TurnCountDown"); //stop the loop timer
-			InputResult(point); //let the player guess the number to lose
+			if (turn == your_turn) {
+				CmdInputResult(0, true); //time out input
+			}
 		}
 	}
 	
-	void RoundEnd () {
-		bang.Play();
-		CancelInvoke("TurnCountDown");
+	void RoundEnd (bool isChallenge) {
+		if (isChallenge) {
+			turn = turn == 1 ? 2 : 1; //swap turn
+		}
 		
 		HP[turn - 1] -= MAX_DAMAGE / (guess_time + 1) + 10;
+		if (HP[turn - 1] <= 0) {
+			HP[turn - 1] = 0;
+		}
+		turn = turn == 1 ? 2 : 1; //swap turn
+		
+		if (HP[2 - turn] == 0) {
+			RpcRoundEnd(true);
+		}
+		else { //some reset for the next round
+			startTurn = startTurn == 1 ? 2 : 1; //swap the starting turn
+			RpcRoundEnd(false);
+		}
+	}
+	
+	[ClientRpc]
+	void RpcRoundEnd (bool endGame) {
+		bang.Play();
+		CancelInvoke("TurnCountDown");
 		
 		screen.setImg(0); //boom image
 		min.text = System.Convert.ToString(point);
 		max.text = System.Convert.ToString(point);
+		lightImg.setTurn(turn);
 		
-		turn = turn == 1 ? 2 : 1; //swap turn
-		if (HP[2 - turn] <= 0) {
-			HP[2 - turn] = 0;
+		HPchange = true;
+		inputBar.Switch(false); //turn off the interaction of the input field
+		
+		if (endGame) {
 			inputBar.setPrompt("PLAYER " + System.Convert.ToString(turn) + " WINS!");
 			InvokeRepeating("EndSet", 5, 1); //wait 5 seconds and end
 		}
-		else { //some reset for the next round
+		else {
 			inputBar.setPrompt("Get ready...");
-			startTurn = startTurn == 1 ? 2 : 1; //swap the starting turn
-			
 			startCounting = 4;
 			InvokeRepeating("StartCountDown", 3, 1); //wait 3 seconds and start the new round starting count down
 		}
-		HPchange = true;
-		inputBar.Switch(false); //turn off the interaction of the input field
 	}
 	
 	void StartCountDown () {
@@ -246,6 +284,17 @@ public class main : MonoBehaviour {
 		else { //the game starts
 			if (startCounting == 0) {
 				screen.setText("GO!");
+				if (isServer) {
+					point = Random.Range(1, 1000);
+					turn = startTurn;
+					lastRandomImg = 0;
+					
+					guess_time = 0;
+					
+					memory_space[0] = 1024;
+					memory_space[1] = 1024;
+					challenge = false;
+				}
 			}
 			else if (startCounting == -2) { //some initialization
 				min.text = "0";
@@ -253,15 +302,12 @@ public class main : MonoBehaviour {
 				HP1.text = System.Convert.ToString(HP[0]);
 				HP2.text = System.Convert.ToString(HP[1]);
 				
-				point = Random.Range(1, 1000);
-				turn = startTurn;
-				lastRandomImg = 0;
-				
-				guess_time = 0;
-				
 				inputBar.setPrompt("Player " + System.Convert.ToString(turn));
-				inputBar.Switch(true);
-				inputBar.Select();
+				if (turn == your_turn) {
+					inputBar.Switch(true);
+					inputBar.Select();
+					skillButton.on(1024);
+				}
 				
 				lightImg.Switch(true);
 				lightImg.setTurn(turn);
@@ -283,7 +329,9 @@ public class main : MonoBehaviour {
 		lightImg.Switch(false);
 		inputBar.setPrompt("");
 		
-		startButton.reset(); //set the start button back
+		if (isClient) {
+			startButton.reset(); //set the start button back
+		}
 		CancelInvoke("EndSet"); //stop the loop timer
 	}
 }

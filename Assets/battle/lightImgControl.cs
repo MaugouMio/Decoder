@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Networking;
 
-public class lightImgControl : MonoBehaviour {
+public class lightImgControl : NetworkBehaviour {
 	void Awake () {
 		this.GetComponent<Renderer>().enabled = false;
 	}

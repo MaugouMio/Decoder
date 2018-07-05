@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Networking;
 
-public class InputBarControl : MonoBehaviour {
+public class InputBarControl : NetworkBehaviour {
 	public main mainScript;
 	public InputField inputfield;
 	
@@ -33,10 +34,10 @@ public class InputBarControl : MonoBehaviour {
 		if (inputfield.enabled){
 			int guess;
 			if (System.Int32.TryParse(inputfield.text, out guess)) {
-				mainScript.InputResult(guess);
+				mainScript.CmdInputResult(guess, false);
 			}
 			else {
-				mainScript.InputResult(0); //definitly failed guess number
+				mainScript.CmdInputResult(0, false); //definitly failed guess number
 			}
 		}
 	}

@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Networking;
 
-public class screenControl : MonoBehaviour {
-	public 
-	Text screen_text;
+public class screenControl : NetworkBehaviour {
+	public Text screen_text;
 	Sprite[] all_img;
 	
 	void Awake () {
@@ -26,8 +26,9 @@ public class screenControl : MonoBehaviour {
 		this.GetComponent<SpriteRenderer>().sprite = all_img[index];
 	}
 	
-	public void setText (string display_text) {
+	public void setText (string display_text, int size = 136) {
 		this.GetComponent<Renderer>().enabled = false;
+		screen_text.fontSize = size;
 		screen_text.text = display_text;
 	}
 }
